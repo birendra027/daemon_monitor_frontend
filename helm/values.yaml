@@ -4,5 +4,5 @@ image:
   tag: frontend_v1.0
   pullPolicy: IfNotPresent
 service:
-  type: ClusterIP
+  type: NodePort
   port: 80

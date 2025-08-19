@@ -41,3 +41,8 @@ You may also see any lint errors in the console.
 
 
 5. We can filter-out the daemons using names. 
+
+
+Run it using kubernetes:
+
+ helm install daemon-frontend ./helm 
