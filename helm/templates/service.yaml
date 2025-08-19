@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "daemon_monitor_frontend.fullname" . }}
+  labels:
+    app: {{ include "daemon_monitor_frontend.name" . }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+  selector:
+    app: {{ include "daemon_monitor_frontend.name" . }}
