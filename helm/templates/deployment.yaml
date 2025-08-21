@@ -22,3 +22,9 @@ spec:
             - containerPort: 80
           resources:
             {{ toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: REACT_APP_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ include \"daemon_monitor_frontend.fullname\" . }}-config"
+                  key: REACT_APP_API_BASE_URL
