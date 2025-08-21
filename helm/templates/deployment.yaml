@@ -26,5 +26,5 @@ spec:
             - name: REACT_APP_API_BASE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: "{{ include \"daemon_monitor_frontend.fullname\" . }}-config"
+                  name: {{ printf "%s-config" (include "daemon_monitor_frontend.fullname" .) }}
                   key: REACT_APP_API_BASE_URL
