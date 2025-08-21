@@ -14,4 +14,6 @@ service:
   type: NodePort
   port: 80
 api:
-  baseUrl: "http://127.0.0.1:5000"
+  # Internal cluster URL of backend service (namespace: demon-monitor-backend)
+  # Adjust port if backend service exposes a different one
+  baseUrl: "http://flask-backend.demon-monitor-backend.svc.cluster.local:5000"
