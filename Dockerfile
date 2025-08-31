@@ -1,4 +1,4 @@
-FROM  birendramondal/daemon_monitor:frontend_v1.0
+FROM  birendramondal/daemon_monitor:frontend_v-latest
 
 COPY /build /usr/share/nginx/html
 
