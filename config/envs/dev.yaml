@@ -1,0 +1,5 @@
+imageRepo: birendramondal/daemon_monitor
+namespace: daemon-frontend
+backendUrl: http://flask-backend.demon-monitor-backend.svc.cluster.local:5000
+replicas: 1
+autoSync: true
