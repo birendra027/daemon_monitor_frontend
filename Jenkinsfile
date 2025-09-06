@@ -25,22 +25,13 @@ pipeline {
     stage('Build React') {
       environment { REACT_APP_API_BASE_URL = "${params.API_BASE_URL}" }
       steps {
-        // Uses your image for the build. It must have node and npm installed.
         sh '''
           set -e
-          docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
-            -e REACT_APP_API_BASE_URL="$REACT_APP_API_BASE_URL" \
-            birendramondal/daemon_monitor:frontend_v1.0 sh -lc '
-              if ! command -v npm >/dev/null 2>&1; then
-                echo "npm not found in birendramondal/daemon_monitor:frontend_v1.0"; exit 1
-              fi
-              node -v || true
-              npm -v || true
-              if [ -f package-lock.json ]; then npm ci; else npm install; fi
-              npm run build
-            '
+          node -v || true
+          npm -v || true
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          export REACT_APP_API_BASE_URL="$REACT_APP_API_BASE_URL"
+          npm run build
         '''
       }
     }
