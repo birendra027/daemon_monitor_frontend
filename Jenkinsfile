@@ -13,7 +13,7 @@ pipeline {
   environment {
     DOCKERHUB_CREDENTIALS = 'dockerhub-credentials-id'
   // Jenkins credentials ID with GitHub access (username + token recommended)
-  GIT_CREDENTIALS       = 'github-credentials-id'
+  GIT_CREDENTIALS       = 'github-token'
     DOCKER_IMAGE_REPO = 'birendramondal/daemon_monitor'
     IMAGE_SHORT_TAG   = 'frontend_v-latest'
     IMAGE_BUILD_TAG   = "frontend_v-${env.BUILD_NUMBER}"
