@@ -8,7 +8,7 @@ resources:
 replicaCount: 1
 image:
   repository: birendramondal/daemon_monitor
-  tag: frontend_v-15
+  tag: frontend_v-16
   pullPolicy: IfNotPresent
 service:
   type: NodePort
