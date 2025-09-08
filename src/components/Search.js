@@ -22,7 +22,7 @@ const highlightMatch = (text = '', query) => {
     return (<>{before}<span className="bg-yellow-400/70 text-gray-900 font-semibold px-0.5 rounded">{match}</span>{after}</>);
 };
 
-const Search = () => {
+const Search = ({ theme, onToggleTheme }) => {
     const [query, setQuery] = useState('');
     const [data, setData] = useState([]);
     const [filtered, setFiltered] = useState([]);
@@ -78,13 +78,13 @@ const Search = () => {
     const save = async () => { setHasChanges(false); };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
-            <header className="bg-sky-900/90 backdrop-blur border-b border-sky-800 sticky top-0 z-10 shadow">
-                <div className="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <div className="relative w-full sm:w-96">
+        <div className="app-shell">
+            <header className="app-header theme-surface" style={{position:'sticky', top:0, zIndex:10, padding:'0.75rem 1rem', display:'flex', gap:'1rem', alignItems:'center', justifyContent:'space-between'}}>
+                <div style={{display:'flex', gap:'0.75rem', alignItems:'center', flex:1}}>
+                    <div style={{position:'relative', flex:'0 0 320px', maxWidth:'100%'}}>
                         <input
                             type="text"
-                            className="w-full bg-gray-800/60 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 px-4 py-2 text-sm placeholder-gray-400"
+                            className="input-basic" style={{width:'100%'}}
                             placeholder="Search daemon name..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
@@ -92,47 +92,54 @@ const Search = () => {
                             autoComplete="off"
                         />
                         {query && suggestions.length > 0 && (
-                            <ul className="absolute left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-56 overflow-auto text-sm">
+                            <ul style={{position:'absolute', left:0, right:0, marginTop:'4px', background:'var(--bg-surface)', border:'1px solid var(--border-color)', borderRadius:'0.5rem', listStyle:'none', padding:0, maxHeight:'220px', overflowY:'auto', fontSize:'0.75rem', boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>
                                 {suggestions.map(s => (
-                                    <li key={s.daemon_id} className="px-3 py-2 hover:bg-gray-700 cursor-pointer flex justify-between"
-                                            onClick={() => { setQuery(s.daemon_name); }}>
+                                    <li key={s.daemon_id} style={{padding:'6px 10px', display:'flex', justifyContent:'space-between', cursor:'pointer'}}
+                                            onClick={() => { setQuery(s.daemon_name); }}
+                                            onKeyDown={(e)=> { if(e.key==='Enter'){ setQuery(s.daemon_name);} }}
+                                            tabIndex={0}
+                                    >
                                         <span>{highlightMatch(s.daemon_name, query)}</span>
-                                        <span className={s.daemon_status === 'UP' ? 'text-lime-300 text-xs' : 'text-red-300 text-xs'}>{s.daemon_status}</span>
+                                        <span className={s.daemon_status === 'UP' ? 'badge-up' : 'badge-down'} style={{fontSize:'0.65rem'}}>{s.daemon_status}</span>
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </div>
                     {hasChanges && (
-                        <button onClick={save} className="self-start sm:self-auto bg-indigo-600 hover:bg-indigo-500 transition-colors text-white text-sm font-medium px-4 py-2 rounded-lg shadow">Save Changes</button>
+                        <button onClick={save} className="accent-action" style={{whiteSpace:'nowrap'}}>Save Changes</button>
                     )}
                 </div>
+                <button type="button" onClick={onToggleTheme} className="btn-theme-toggle" aria-label="Toggle color theme">
+                    {theme === 'theme-dark' ? 'Light Mode' : 'Dark Mode'}
+                </button>
             </header>
-            <main className="max-w-6xl mx-auto px-4 py-10">
-                {loading && <p className="text-center text-sm opacity-80">Loading data...</p>}
-                {error && <p className="text-center text-sm text-red-400">{error}</p>}
-                {!loading && !error && filtered.length === 0 && <p className="text-center text-sm opacity-70">No daemons match your search.</p>}
-                <div className="grid gap-5 mt-6 sm:grid-cols-2 lg:grid-cols-3">
+            <main style={{maxWidth:'1200px', margin:'0 auto', padding:'2.5rem 1rem'}}>
+                {loading && <p style={{textAlign:'center', fontSize:'0.8rem', opacity:0.8}}>Loading data...</p>}
+                {error && <p style={{textAlign:'center', fontSize:'0.8rem'}} className="badge-down">{error}</p>}
+                {!loading && !error && filtered.length === 0 && <p style={{textAlign:'center', fontSize:'0.8rem', opacity:0.7}}>No daemons match your search.</p>}
+                <div style={{display:'grid', gap:'1.25rem', marginTop:'1.5rem', gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))'}}>
                     {filtered.map(d => {
                         const up = d.daemon_status === 'UP';
                         return (
-                            <div key={d.daemon_id} className={`relative rounded-xl p-5 border transition-colors duration-200 ${up ? 'border-lime-400/40 bg-lime-600/20' : 'border-red-400/40 bg-red-600/20'} shadow hover:shadow-lg`}>
-                                <h2 className="text-lg font-semibold mb-1 break-all">{highlightMatch(d.daemon_name, query)}</h2>
-                                <p className="text-xs mb-1 opacity-80">ID: {d.daemon_id}</p>
-                                <p className="text-xs mb-2">Status: <span className={up ? 'text-lime-300 font-medium' : 'text-red-300 font-medium'}>{d.daemon_status}</span></p>
-                                <p className="text-xs mb-3">Instances: {d.instance}</p>
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <input
-                                                        type="number"
-                                                        min={0}
-                                                        value={instanceEdits[d.daemon_id] ?? ''}
-                                                        onChange={e => setInstanceEdits(prev => ({ ...prev, [d.daemon_id]: e.target.value }))}
-                                                        placeholder="Set"
-                                                        className="w-20 bg-gray-800/70 border border-gray-700 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                                                    />
-                                                    <button onClick={() => applyInstance(d)} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1 rounded shadow">Apply</button>
-                                                </div>
-                                <button onClick={() => toggleStatus(d.daemon_id)} className="bg-gray-700 hover:bg-gray-600 text-white text-xs font-medium px-3 py-1 rounded">Toggle {up ? 'Down' : 'Up'}</button>
+                            <div key={d.daemon_id} className="card-generic" style={{borderColor: up ? 'var(--success)' : 'var(--danger)'}}>
+                                <h2 style={{fontSize:'1rem', margin:'0 0 4px', wordBreak:'break-word'}}>{highlightMatch(d.daemon_name, query)}</h2>
+                                <p style={{margin:'0 0 4px', fontSize:'0.65rem', opacity:0.8}}>ID: {d.daemon_id}</p>
+                                <p style={{margin:'0 0 6px', fontSize:'0.7rem'}}>Status: <span className={up ? 'badge-up' : 'badge-down'}>{d.daemon_status}</span></p>
+                                <p style={{margin:'0 0 10px', fontSize:'0.7rem'}}>Instances: {d.instance}</p>
+                                <div style={{display:'flex', gap:'6px', alignItems:'center', marginBottom:'10px'}}>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={instanceEdits[d.daemon_id] ?? ''}
+                                        onChange={e => setInstanceEdits(prev => ({ ...prev, [d.daemon_id]: e.target.value }))}
+                                        placeholder="Set"
+                                        className="input-basic"
+                                        style={{width:'70px', padding:'4px 6px', fontSize:'0.65rem'}}
+                                    />
+                                    <button onClick={() => applyInstance(d)} className="accent-action" style={{fontSize:'0.6rem', padding:'4px 8px'}}>Apply</button>
+                                </div>
+                                <button onClick={() => toggleStatus(d.daemon_id)} className="btn-small" style={{fontSize:'0.6rem'}}>Toggle {up ? 'Down' : 'Up'}</button>
                             </div>
                         );
                     })}

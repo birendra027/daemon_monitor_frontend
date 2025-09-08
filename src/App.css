@@ -2,6 +2,104 @@
   text-align: center;
 }
 
+/* Theme root variables */
+.theme-dark {
+  --bg-root: #0f172a; /* slate-900 */
+  --bg-surface: #1e293b; /* slate-800 */
+  --bg-accent: #334155; /* slate-700 */
+  --border-color: #334155;
+  --text-primary: #f1f5f9; /* slate-100 */
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --accent: #6366f1; /* indigo-500 */
+  --accent-hover: #4f46e5; /* indigo-600 */
+  --danger: #dc2626;
+  --success: #16a34a;
+}
+
+.theme-light {
+  --bg-root: #f8fafc; /* slate-50 */
+  --bg-surface: #ffffff;
+  --bg-accent: #f1f5f9; /* slate-100 */
+  --border-color: #cbd5e1; /* slate-300 */
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #334155; /* slate-700 */
+  --accent: #4f46e5; /* indigo-600 */
+  --accent-hover: #4338ca; /* indigo-700 */
+  --danger: #b91c1c;
+  --success: #15803d;
+}
+
+body, .App.theme-dark, .App.theme-light {
+  background: var(--bg-root);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+.theme-surface {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+}
+
+.btn-theme-toggle {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.btn-theme-toggle:hover { background: var(--accent-hover); }
+
+.input-basic {
+  background: var(--bg-accent);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.card-generic {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  text-align: left;
+  transition: box-shadow 0.2s ease, background 0.3s ease, transform 0.2s ease;
+}
+.card-generic:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.25); transform: translateY(-2px); }
+
+.badge-up { color: var(--success); font-weight: 600; }
+.badge-down { color: var(--danger); font-weight: 600; }
+
+.btn-small {
+  background: var(--bg-accent);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  font-size: 0.7rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.btn-small:hover { background: var(--accent); color: #fff; }
+
+.accent-action {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.accent-action:hover { background: var(--accent-hover); }
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
