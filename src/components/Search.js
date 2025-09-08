@@ -79,25 +79,38 @@ const Search = ({ theme, onToggleTheme }) => {
 
     return (
         <div className="app-shell">
-            <header className="app-header theme-surface" style={{position:'sticky', top:0, zIndex:10, padding:'0.75rem 1rem', display:'flex', gap:'1rem', alignItems:'center', justifyContent:'space-between'}}>
-                <div style={{display:'flex', gap:'0.75rem', alignItems:'center', flex:1}}>
-                    <div style={{position:'relative', flex:'0 0 320px', maxWidth:'100%'}}>
-                        <input
-                            type="text"
-                            className="input-basic" style={{width:'100%'}}
-                            placeholder="Search daemon name..."
-                            value={query}
-                            onChange={e => setQuery(e.target.value)}
-                            aria-label="Search daemons"
-                            autoComplete="off"
-                        />
+            <header className="collapsible-header theme-surface">
+                <div className="left-zone">
+                  {/* Search icon (visible collapsed) */}
+                  <button className="icon-btn search-icon-only" aria-label="Show search">
+                    🔍
+                  </button>
+                  {/* Expanded search input */}
+                  <div className="search-input-wrapper expanded-only">
+                                                <div className="search-bar-group">
+                                                    <input
+                                                            type="text"
+                                                            className="input-basic"
+                                                            placeholder="Search daemon name..."
+                                                            value={query}
+                                                            onChange={e => setQuery(e.target.value)}
+                                                            aria-label="Search daemons"
+                                                            autoComplete="off"
+                                                    />
+                                                    <button
+                                                            type="button"
+                                                            className="btn-search"
+                                                            aria-label="Execute search"
+                                                            onClick={() => setQuery(q => q.trim())}
+                                                    >🔍</button>
+                                                </div>
                         {query && suggestions.length > 0 && (
-                            <ul style={{position:'absolute', left:0, right:0, marginTop:'4px', background:'var(--bg-surface)', border:'1px solid var(--border-color)', borderRadius:'0.5rem', listStyle:'none', padding:0, maxHeight:'220px', overflowY:'auto', fontSize:'0.75rem', boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>
+                            <ul className="suggestions-pop">
                                 {suggestions.map(s => (
-                                    <li key={s.daemon_id} style={{padding:'6px 10px', display:'flex', justifyContent:'space-between', cursor:'pointer'}}
-                                            onClick={() => { setQuery(s.daemon_name); }}
-                                            onKeyDown={(e)=> { if(e.key==='Enter'){ setQuery(s.daemon_name);} }}
-                                            tabIndex={0}
+                                    <li key={s.daemon_id}
+                                        onClick={() => { setQuery(s.daemon_name); }}
+                                        onKeyDown={(e)=> { if(e.key==='Enter'){ setQuery(s.daemon_name);} }}
+                                        tabIndex={0}
                                     >
                                         <span>{highlightMatch(s.daemon_name, query)}</span>
                                         <span className={s.daemon_status === 'UP' ? 'badge-up' : 'badge-down'} style={{fontSize:'0.65rem'}}>{s.daemon_status}</span>
@@ -105,13 +118,14 @@ const Search = ({ theme, onToggleTheme }) => {
                                 ))}
                             </ul>
                         )}
-                    </div>
-                    {hasChanges && (
-                        <button onClick={save} className="accent-action" style={{whiteSpace:'nowrap'}}>Save Changes</button>
-                    )}
+                  </div>
+                  {hasChanges && (
+                        <button onClick={save} className="accent-action expanded-only" style={{whiteSpace:'nowrap'}}>Save Changes</button>
+                  )}
                 </div>
                 <button type="button" onClick={onToggleTheme} className="btn-theme-toggle" aria-label="Toggle color theme">
-                    {theme === 'theme-dark' ? 'Light Mode' : 'Dark Mode'}
+                  <span className="theme-icon" role="img" aria-hidden="true">{theme === 'theme-dark' ? '🌙' : '☀️'}</span>
+                  <span className="theme-label" style={{marginLeft:'6px'}}>{theme === 'theme-dark' ? 'Dark Mode' : 'Light Mode'}</span>
                 </button>
             </header>
             <main style={{maxWidth:'1200px', margin:'0 auto', padding:'2.5rem 1rem'}}>
