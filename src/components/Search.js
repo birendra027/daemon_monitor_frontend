@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 // Runtime-configured API base: prefer env injected at build, then global window config map (for future), then default
 const API_BASE = process.env.REACT_APP_API_BASE_URL || (typeof window !== 'undefined' && window.__APP_CONFIG__?.API_BASE_URL) || 'http://127.0.0.1:5000';
@@ -22,54 +22,50 @@ const highlightMatch = (text = '', query) => {
     return (<>{before}<span className="bg-yellow-400/70 text-gray-900 font-semibold px-0.5 rounded">{match}</span>{after}</>);
 };
 
-// Lightweight line chart for daemon instances
+// Responsive lightweight line chart component
 const ChartPanel = ({ data }) => {
-  const points = useMemo(() => (data || []).map((d, i) => ({ x: i, y: Number(d.instance) || 0 })), [data]);
+  const containerRef = useRef(null);
+  const [width, setWidth] = useState(800);
+  useEffect(() => {
+    const el = containerRef.current; if (!el) return;
+    const handle = () => setWidth(Math.max(320, el.clientWidth));
+    handle();
+    const ro = new ResizeObserver(handle); ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const points = useMemo(() => (data || []).map((d,i)=>({x:i,y:Number(d.instance)||0})), [data]);
   if (points.length < 2) return null;
-  const width = 900, height = 300, padX = 40, padY = 28;
-  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const height = 300, padX = 40, padY = 28;
+  const xs = points.map(p=>p.x), ys = points.map(p=>p.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
   const spanX = maxX - minX || 1, spanY = maxY - minY || 1;
-  const sx = x => padX + (x - minX) / spanX * (width - padX * 2);
-  const sy = y => height - padY - (y - minY) / spanY * (height - padY * 2);
-  const path = (() => {
-    if (points.length < 2) return '';
-    const c = points.map(p => ({ X: sx(p.x), Y: sy(p.y) }));
-    let d = `M ${c[0].X} ${c[0].Y}`;
-    for (let i = 0; i < c.length - 1; i++) {
-      const p0 = c[i - 1] || c[i], p1 = c[i], p2 = c[i + 1], p3 = c[i + 2] || p2;
-      const cp1x = p1.X + (p2.X - p0.X) / 6, cp1y = p1.Y + (p2.Y - p0.Y) / 6;
-      const cp2x = p2.X - (p3.X - p1.X) / 6, cp2y = p2.Y - (p3.Y - p1.Y) / 6;
-      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.X} ${p2.Y}`;
-    }
-    return d;
-  })();
-  const grid = Array.from({ length: 5 }, (_, i) => {
-    const yVal = minY + (spanY / 4) * i; return { y: sy(yVal), label: Math.round(yVal) };
-  });
+  const sx = x => padX + (x-minX)/spanX * (width - padX*2);
+  const sy = y => height - padY - (y-minY)/spanY * (height - padY*2);
+  const path = (() => { if(points.length<2) return ''; const c = points.map(p=>({X:sx(p.x),Y:sy(p.y)})); let d = `M ${c[0].X} ${c[0].Y}`; for(let i=0;i<c.length-1;i++){ const p0=c[i-1]||c[i],p1=c[i],p2=c[i+1],p3=c[i+2]||p2; const cp1x=p1.X+(p2.X-p0.X)/6, cp1y=p1.Y+(p2.Y-p0.Y)/6; const cp2x=p2.X-(p3.X-p1.X)/6, cp2y=p2.Y-(p3.Y-p1.Y)/6; d+=` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.X} ${p2.Y}`;} return d; })();
+  const grid = Array.from({length:5},(_,i)=>{const yVal=minY+(spanY/4)*i; return { y: sy(yVal), label: Math.round(yVal)};});
   return (
-    <div className="chart-card theme-surface" style={{ marginTop: '2rem', padding: '1.1rem 1.25rem' }}>
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.6rem'}}>
-        <h3 style={{margin:0, fontSize:'0.9rem'}}>Instance Distribution</h3>
-        <span style={{fontSize:'0.6rem', opacity:.7}}>Count: {points.length}</span>
+    <section ref={containerRef} className="chart-card theme-surface" style={{marginTop:'2.25rem', padding:'1.15rem 1.3rem'}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.65rem', flexWrap:'wrap', gap:'.5rem'}}>
+        <h3 style={{margin:0, fontSize:'clamp(.8rem,.9rem + .2vw,1rem)'}}>Instance Distribution</h3>
+        <span style={{fontSize:'0.6rem', opacity:.7}}>Daemons: {points.length}</span>
       </div>
       <div className="chart-wrapper">
-        <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daemon instance counts">
+        <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label="Daemon instance counts trend">
           <defs>
-            <linearGradient id="instStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="chartStroke" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#c084fc" />
-              <stop offset="60%" stopColor="#8b5cf6" />
+              <stop offset="65%" stopColor="#8b5cf6" />
               <stop offset="100%" stopColor="#6366f1" />
             </linearGradient>
-            <linearGradient id="instFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="chartFill" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="rgba(192,132,252,0.32)" />
               <stop offset="55%" stopColor="rgba(139,92,246,0.18)" />
               <stop offset="100%" stopColor="rgba(99,102,241,0.04)" />
             </linearGradient>
-            <filter id="instGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="g" />
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
               <feMerge>
-                <feMergeNode in="g" />
+                <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
@@ -77,15 +73,15 @@ const ChartPanel = ({ data }) => {
           {grid.map(g => (
             <g key={g.y}>
               <line x1={padX} x2={width - padX} y1={g.y} y2={g.y} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
-              <text x={8} y={g.y + 4} fontSize={10} fill="rgba(255,255,255,0.28)" style={{fontFamily:'ui-monospace,monospace'}}>{g.label}</text>
+              <text x={8} y={g.y + 4} fontSize={10} fill="rgba(255,255,255,0.30)" style={{fontFamily:'ui-monospace,monospace'}}>{g.label}</text>
             </g>
           ))}
-          <path d={`${path} L ${sx(points[points.length-1].x)} ${sy(minY)} L ${sx(points[0].x)} ${sy(minY)} Z`} fill="url(#instFill)" opacity={0.85} />
-          <path d={path} fill="none" stroke="url(#instStroke)" strokeWidth={4} filter="url(#instGlow)" strokeLinecap="round" />
-          {points.map(p => <circle key={p.x} cx={sx(p.x)} cy={sy(p.y)} r={5} fill="#c084fc" stroke="#fff" strokeWidth={1.1} opacity={0.9} />)}
+          <path d={`${path} L ${sx(points[points.length-1].x)} ${sy(minY)} L ${sx(points[0].x)} ${sy(minY)} Z`} fill="url(#chartFill)" opacity={0.85} />
+          <path d={path} fill="none" stroke="url(#chartStroke)" strokeWidth={4} strokeLinecap="round" filter="url(#glow)" />
+          {points.map(p => <circle key={p.x} cx={sx(p.x)} cy={sy(p.y)} r={5} fill="#c084fc" stroke="#fff" strokeWidth={1.2} opacity={0.9} />)}
         </svg>
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -144,6 +140,87 @@ const Search = ({ theme, onToggleTheme }) => {
 
     const save = async () => { setHasChanges(false); };
 
+    // === Slider logic injection START ===
+    // (Placed just before the return; dedupe guard: only add if not existing)
+    // eslint-disable-next-line no-unused-vars
+    const sliderTrackRef = useRef(null);
+    const [canSlideLeft, setCanSlideLeft] = useState(false);
+    const [canSlideRight, setCanSlideRight] = useState(true);
+
+    const updateSlideButtons = () => {
+      const el = sliderTrackRef.current; if(!el) return;
+      setCanSlideLeft(el.scrollLeft > 10);
+      setCanSlideRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+    };
+
+    useEffect(() => { updateSlideButtons(); }, [filtered]);
+
+    const slideBy = (dir) => {
+      const el = sliderTrackRef.current; if(!el) return;
+      // Determine one “page” = width / 1 (show all 4 new) or card width * 2 for partial; we use width * 0.9 for smoothness
+      const page = el.clientWidth * 0.9;
+      el.scrollBy({ left: dir * page, behavior: 'smooth' });
+      // Post-update after animation; minor timeout
+      setTimeout(updateSlideButtons, 450);
+    };
+
+    const onSliderScroll = () => { updateSlideButtons(); updateEdgeScales(); };
+
+    // Drag-to-scroll + edge scale effect
+    const isDraggingRef = useRef(false);
+    const dragStartXRef = useRef(0);
+    const dragStartScrollRef = useRef(0);
+
+    const onPointerDown = (e) => {
+      const el = sliderTrackRef.current; if(!el) return;
+      isDraggingRef.current = true;
+      dragStartXRef.current = e.clientX;
+      dragStartScrollRef.current = el.scrollLeft;
+      el.classList.add('is-dragging');
+      el.setPointerCapture(e.pointerId);
+    };
+    const onPointerMove = (e) => {
+      if(!isDraggingRef.current) return;
+      const el = sliderTrackRef.current; if(!el) return;
+      const dx = e.clientX - dragStartXRef.current;
+      el.scrollLeft = dragStartScrollRef.current - dx;
+      updateSlideButtons();
+      requestAnimationFrame(updateEdgeScales);
+    };
+    const endDrag = (e) => {
+      if(!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      const el = sliderTrackRef.current; if(el){ el.classList.remove('is-dragging'); }
+      if(e?.pointerId && sliderTrackRef.current?.hasPointerCapture(e.pointerId)) sliderTrackRef.current.releasePointerCapture(e.pointerId);
+      updateEdgeScales();
+    };
+
+    const updateEdgeScales = () => {
+      const track = sliderTrackRef.current; if(!track) return;
+      const cards = Array.from(track.querySelectorAll('.slider-card'));
+      const rectTrack = track.getBoundingClientRect();
+      // Determine fully visible cards
+      const fullyVisibleIdxs = cards.map((c,i)=>{ const r=c.getBoundingClientRect(); return (r.left>=rectTrack.left+4 && r.right<=rectTrack.right-4)?i:null; }).filter(i=>i!==null);
+      cards.forEach(c=>c.removeAttribute('data-edge'));
+      if(fullyVisibleIdxs.length){
+        const first = fullyVisibleIdxs[0];
+        const last = fullyVisibleIdxs[fullyVisibleIdxs.length-1];
+        if(first>0) cards[first-1]?.setAttribute('data-edge','left');
+        if(last < cards.length-1) cards[last+1]?.setAttribute('data-edge','right');
+      } else {
+        // Fallback: show next card after scrolled
+        if(track.scrollLeft>0) cards[0]?.setAttribute('data-edge','left');
+      }
+    };
+
+    useEffect(()=>{ updateEdgeScales(); }, [filtered]);
+    useEffect(()=>{
+      const ro = new ResizeObserver(()=>{ updateEdgeScales(); });
+      if(sliderTrackRef.current) ro.observe(sliderTrackRef.current);
+      return ()=> ro.disconnect();
+    }, []);
+    // === Slider logic injection END ===
+
     return (
         <div className="app-shell">
             <header className="collapsible-header theme-surface">
@@ -199,32 +276,71 @@ const Search = ({ theme, onToggleTheme }) => {
                 {loading && <p style={{textAlign:'center', fontSize:'0.8rem', opacity:0.8}}>Loading data...</p>}
                 {error && <p style={{textAlign:'center', fontSize:'0.8rem'}} className="badge-down">{error}</p>}
                 {!loading && !error && filtered.length === 0 && <p style={{textAlign:'center', fontSize:'0.8rem', opacity:0.7}}>No daemons match your search.</p>}
-                <div style={{display:'grid', gap:'1.25rem', marginTop:'1.5rem', gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))'}}>
-                    {filtered.map(d => {
-                        const up = d.daemon_status === 'UP';
-                        return (
-                            <div key={d.daemon_id} className="card-generic" style={{borderColor: up ? 'var(--success)' : 'var(--danger)'}}>
-                                <h2 style={{fontSize:'1rem', margin:'0 0 4px', wordBreak:'break-word'}}>{highlightMatch(d.daemon_name, query)}</h2>
-                                <p style={{margin:'0 0 4px', fontSize:'0.65rem', opacity:0.8}}>ID: {d.daemon_id}</p>
-                                <p style={{margin:'0 0 6px', fontSize:'0.7rem'}}>Status: <span className={up ? 'badge-up' : 'badge-down'}>{d.daemon_status}</span></p>
-                                <p style={{margin:'0 0 10px', fontSize:'0.7rem'}}>Instances: {d.instance}</p>
-                                <div style={{display:'flex', gap:'6px', alignItems:'center', marginBottom:'10px'}}>
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        value={instanceEdits[d.daemon_id] ?? ''}
-                                        onChange={e => setInstanceEdits(prev => ({ ...prev, [d.daemon_id]: e.target.value }))}
-                                        placeholder="Set"
-                                        className="input-basic"
-                                        style={{width:'70px', padding:'4px 6px', fontSize:'0.65rem'}}
-                                    />
-                                    <button onClick={() => applyInstance(d)} className="accent-action" style={{fontSize:'0.6rem', padding:'4px 8px'}}>Apply</button>
-                                </div>
-                                <button onClick={() => toggleStatus(d.daemon_id)} className="btn-small" style={{fontSize:'0.6rem'}}>Toggle {up ? 'Down' : 'Up'}</button>
-                            </div>
-                        );
+                {/* SLIDER START */}
+                <div className="card-slider transparent-slider" aria-label="Daemon cards horizontal slider">
+                  {filtered.length > 4 && (
+                    <button
+                      type="button"
+                      className="slider-btn slider-btn-left"
+                      aria-label="Scroll left"
+                      disabled={!canSlideLeft}
+                      onClick={() => slideBy(-1)}
+                    >‹</button>
+                  )}
+                  <div
+                    className="card-track"
+                    ref={sliderTrackRef}
+                    onScroll={onSliderScroll}
+                    role="group"
+                    style={{scrollSnapType:'x mandatory'}}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={endDrag}
+                    onPointerLeave={endDrag}
+                  >
+                    {filtered.map((d, idx) => {
+                      const up = d.daemon_status === 'UP';
+                      return (
+                        <div
+                          key={d.daemon_id}
+                          className="card-generic slider-card" 
+                          style={{borderColor: up ? 'var(--success)' : 'var(--danger)', scrollSnapAlign:'start'}}
+                        >
+                          <h2 style={{fontSize:'clamp(.85rem, .8rem + .35vw, 1.05rem)', margin:'0 0 4px', wordBreak:'break-word'}}>{highlightMatch(d.daemon_name, query)}</h2>
+                          <p style={{margin:'0 0 4px', fontSize:'0.6rem', opacity:0.75}}>ID: {d.daemon_id}</p>
+                          <p style={{margin:'0 0 6px', fontSize:'0.65rem'}}>Status: <span className={up ? 'badge-up' : 'badge-down'}>{d.daemon_status}</span></p>
+                          <p style={{margin:'0 0 10px', fontSize:'0.65rem'}}>Instances: {d.instance}</p>
+                          <div style={{display:'flex', gap:'6px', alignItems:'center', marginBottom:'10px'}}>
+                            <input
+                              type="number"
+                              min={0}
+                              value={instanceEdits[d.daemon_id] ?? ''}
+                              onChange={e => setInstanceEdits(prev => ({ ...prev, [d.daemon_id]: e.target.value }))}
+                              placeholder="Set"
+                              className="input-basic"
+                              style={{width:'64px', padding:'4px 6px', fontSize:'0.6rem'}}
+                            />
+                            <button onClick={() => applyInstance(d)} className="accent-action" style={{fontSize:'0.55rem', padding:'4px 8px'}}>Apply</button>
+                          </div>
+                          <button onClick={() => toggleStatus(d.daemon_id)} className="btn-small" style={{fontSize:'0.55rem'}}>Toggle {up ? 'Down' : 'Up'}</button>
+                        </div>
+                      );
                     })}
+                  </div>
+                  {filtered.length > 4 && (
+                    <button
+                      type="button"
+                      className="slider-btn slider-btn-right"
+                      aria-label="Scroll right"
+                      disabled={!canSlideRight}
+                      onClick={() => slideBy(1)}
+                    >›</button>
+                  )}
+                  {/* Drag handles */}
+                  <div className="drag-handle drag-handle-left" onPointerDown={onPointerDown}>⠿</div>
+                  <div className="drag-handle drag-handle-right" onPointerDown={onPointerDown}>⠿</div>
                 </div>
+                {/* SLIDER END */}
                 <ChartPanel data={filtered} />
             </main>
         </div>
