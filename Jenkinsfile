@@ -79,19 +79,14 @@ pipeline {
         '''
         withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
           sh '''
-            set -e
-            ORIGIN_URL=$(git config --get remote.origin.url)
-            BRANCH=$(git rev-parse --abbrev-ref HEAD)
-            # Construct authenticated push URL for HTTPS remotes
-            if echo "$ORIGIN_URL" | grep -qE '^https://'; then
+              # Extract branch name (remove "origin/")
+              BRANCH=${GIT_BRANCH#origin/}
+              echo "Pushing to branch: $BRANCH"
+              ORIGIN_URL=$(git config --get remote.origin.url)
               HOST_PATH=${ORIGIN_URL#https://}
               PUSH_URL="https://${GIT_USER}:${GIT_PASS}@${HOST_PATH}"
-            else
-              # Fallback (may prompt if using SSH remote)
-              PUSH_URL="$ORIGIN_URL"
-            fi
-            git push "$PUSH_URL" "HEAD:${BRANCH}"
-          '''
+              git push "$PUSH_URL" HEAD:refs/heads/$BRANCH
+    '''
         }
       }
     }
