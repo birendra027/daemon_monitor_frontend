@@ -166,40 +166,12 @@ const Search = ({ theme, onToggleTheme }) => {
 
     const onSliderScroll = () => { updateSlideButtons(); updateEdgeScales(); };
 
-    // Drag-to-scroll + edge scale effect
-    const isDraggingRef = useRef(false);
-    const dragStartXRef = useRef(0);
-    const dragStartScrollRef = useRef(0);
-
-    const onPointerDown = (e) => {
-      const el = sliderTrackRef.current; if(!el) return;
-      isDraggingRef.current = true;
-      dragStartXRef.current = e.clientX;
-      dragStartScrollRef.current = el.scrollLeft;
-      el.classList.add('is-dragging');
-      el.setPointerCapture(e.pointerId);
-    };
-    const onPointerMove = (e) => {
-      if(!isDraggingRef.current) return;
-      const el = sliderTrackRef.current; if(!el) return;
-      const dx = e.clientX - dragStartXRef.current;
-      el.scrollLeft = dragStartScrollRef.current - dx;
-      updateSlideButtons();
-      requestAnimationFrame(updateEdgeScales);
-    };
-    const endDrag = (e) => {
-      if(!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-      const el = sliderTrackRef.current; if(el){ el.classList.remove('is-dragging'); }
-      if(e?.pointerId && sliderTrackRef.current?.hasPointerCapture(e.pointerId)) sliderTrackRef.current.releasePointerCapture(e.pointerId);
-      updateEdgeScales();
-    };
-
+    // Remove drag logic (was here) – keeping only arrow navigation
+    // Clean edge scale function retained
     const updateEdgeScales = () => {
       const track = sliderTrackRef.current; if(!track) return;
       const cards = Array.from(track.querySelectorAll('.slider-card'));
       const rectTrack = track.getBoundingClientRect();
-      // Determine fully visible cards
       const fullyVisibleIdxs = cards.map((c,i)=>{ const r=c.getBoundingClientRect(); return (r.left>=rectTrack.left+4 && r.right<=rectTrack.right-4)?i:null; }).filter(i=>i!==null);
       cards.forEach(c=>c.removeAttribute('data-edge'));
       if(fullyVisibleIdxs.length){
@@ -207,9 +179,6 @@ const Search = ({ theme, onToggleTheme }) => {
         const last = fullyVisibleIdxs[fullyVisibleIdxs.length-1];
         if(first>0) cards[first-1]?.setAttribute('data-edge','left');
         if(last < cards.length-1) cards[last+1]?.setAttribute('data-edge','right');
-      } else {
-        // Fallback: show next card after scrolled
-        if(track.scrollLeft>0) cards[0]?.setAttribute('data-edge','left');
       }
     };
 
@@ -293,10 +262,6 @@ const Search = ({ theme, onToggleTheme }) => {
                     onScroll={onSliderScroll}
                     role="group"
                     style={{scrollSnapType:'x mandatory'}}
-                    onPointerDown={onPointerDown}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={endDrag}
-                    onPointerLeave={endDrag}
                   >
                     {filtered.map((d, idx) => {
                       const up = d.daemon_status === 'UP';
@@ -336,9 +301,7 @@ const Search = ({ theme, onToggleTheme }) => {
                       onClick={() => slideBy(1)}
                     >›</button>
                   )}
-                  {/* Drag handles */}
-                  <div className="drag-handle drag-handle-left" onPointerDown={onPointerDown}>⠿</div>
-                  <div className="drag-handle drag-handle-right" onPointerDown={onPointerDown}>⠿</div>
+                  {/* Drag handles removed */}
                 </div>
                 {/* SLIDER END */}
                 <ChartPanel data={filtered} />
