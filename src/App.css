@@ -430,6 +430,10 @@ body { font-size: clamp(14px, 13px + .35vw, 16px); }
 .card-generic h2 { letter-spacing:.3px; }
 .chart-card { transition:background .6s ease, box-shadow .6s ease; }
 .chart-card:hover { box-shadow:0 8px 30px -12px rgba(0,0,0,0.55); }
+.chart-tooltip { position:absolute; pointer-events:none; background:rgba(17,25,40,0.88); color:#fff; padding:.45rem .6rem .5rem; border-radius:.55rem; font-size:.55rem; line-height:1.2; box-shadow:0 4px 18px -6px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,0.08) inset; backdrop-filter:blur(8px) saturate(160%); -webkit-backdrop-filter:blur(8px) saturate(160%); min-width:110px; }
+.theme-light .chart-tooltip { background:rgba(255,255,255,0.9); color:#111827; box-shadow:0 4px 14px -6px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,0.05) inset; }
+.chart-tooltip-label { font-weight:600; margin-bottom:2px; letter-spacing:.4px; }
+.chart-tooltip-value { font-weight:500; opacity:.85; }
 /* Compact adjustments for very small screens */
 @media (max-width:540px){
   .collapsible-header { padding:0.5rem 0.65rem; }

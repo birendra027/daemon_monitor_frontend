@@ -10,7 +10,8 @@ const ChartPanel = ({ data, theme }) => {
     const ro = new ResizeObserver(handle); ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const points = useMemo(() => (data || []).map((d,i)=>({x:i,y:Number(d.instance)||0})), [data]);
+  const points = useMemo(() => (data || []).map((d,i)=>({x:i,y:Number(d.instance)||0,label:d.daemon_name||`Item ${i+1}`})), [data]);
+  const [hover, setHover] = useState(null); // {x,y,label,value}
   if (points.length < 2) return null;
   const isLight = theme === 'theme-light';
   const palette = {
@@ -27,7 +28,11 @@ const ChartPanel = ({ data, theme }) => {
   };
   const height = 300, padX = 40, padY = 28;
   const xs = points.map(p=>p.x), ys = points.map(p=>p.y);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  // Force Y-axis to always start at 0 for consistent baseline
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = 0;
+  const rawMaxY = Math.max(...ys, 0);
+  const maxY = rawMaxY === 0 ? 1 : rawMaxY; // ensure non-zero span when all data is zero
   const spanX = maxX - minX || 1, spanY = maxY - minY || 1;
   const sx = x => padX + (x-minX)/spanX * (width - padX*2);
   const sy = y => height - padY - (y-minY)/spanY * (height - padY*2);
@@ -39,7 +44,7 @@ const ChartPanel = ({ data, theme }) => {
         <h3 style={{margin:0, fontSize:'clamp(.8rem,.9rem + .2vw,1rem)'}}>Instance Distribution</h3>
         <span style={{fontSize:'0.6rem', opacity:.7}}>Daemons: {points.length}</span>
       </div>
-      <div className="chart-wrapper">
+      <div className="chart-wrapper" style={{position:'relative'}}>
         <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label="Daemon instance counts trend">
           <defs>
             <linearGradient id="chartStroke" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -68,8 +73,43 @@ const ChartPanel = ({ data, theme }) => {
           ))}
           <path d={`${path} L ${sx(points[points.length-1].x)} ${sy(minY)} L ${sx(points[0].x)} ${sy(minY)} Z`} fill="url(#chartFill)" opacity={0.85} />
           <path d={path} fill="none" stroke="url(#chartStroke)" strokeWidth={4} strokeLinecap="round" filter="url(#glow)" />
-          {points.map(p => <circle key={p.x} cx={sx(p.x)} cy={sy(p.y)} r={5} fill={palette.point} stroke={palette.pointStroke} strokeWidth={1.2} opacity={isLight ? 0.95 : 0.9} />)}
+          {points.map(p => {
+            const cx = sx(p.x); const cy = sy(p.y);
+            return (
+              <g key={p.x} tabIndex={0}
+                 onMouseEnter={()=> setHover({x:cx, y:cy, label:p.label, value:p.y})}
+                 onMouseLeave={()=> setHover(null)}
+                 onFocus={()=> setHover({x:cx, y:cy, label:p.label, value:p.y})}
+                 onBlur={()=> setHover(null)}
+              >
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={6}
+                  fill={palette.point}
+                  stroke={palette.pointStroke}
+                  strokeWidth={1.4}
+                  opacity={isLight ? 0.95 : 0.9}
+                  style={{cursor:'pointer', filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.25))'}}
+                />
+              </g>
+            );
+          })}
         </svg>
+        {hover && (
+          <div
+            className="chart-tooltip"
+            role="tooltip"
+            style={{
+              left: `${(hover.x / width) * 100}%`,
+              top: `${(hover.y / height) * 100}%`,
+              transform:'translate(12px, -12px)'
+            }}
+          >
+            <div className="chart-tooltip-label">{hover.label}</div>
+            <div className="chart-tooltip-value">Instances: {hover.value}</div>
+          </div>
+        )}
       </div>
     </section>
   );
