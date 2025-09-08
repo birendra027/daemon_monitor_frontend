@@ -444,7 +444,7 @@ body { font-size: clamp(14px, 13px + .35vw, 16px); }
 /* Slider drag + edge reveal effect */
 .card-track.is-dragging { cursor:grabbing; }
 .card-track { cursor:grab; }
-.slider-card[data-edge="left"], .slider-card[data-edge="right"] { transform:scale(.82) translateY(6px); opacity:.65; filter:blur(0.3px) saturate(.8); transition:transform .45s cubic-bezier(.22,.61,.36,1), opacity .45s ease; }
+.slider-card[data-edge="left"], .slider-card[data-edge="right"] { transform:scale(.9) translateY(4px); opacity:.8; filter:brightness(.95) saturate(.9); }
 .slider-card[data-edge="left"]::after, .slider-card[data-edge="right"]::after { content:""; position:absolute; inset:0; border-radius:inherit; background:linear-gradient(90deg, rgba(0,0,0,0.35), transparent); opacity:.25; pointer-events:none; }
 .slider-card[data-edge="right"]::after { background:linear-gradient(270deg, rgba(0,0,0,0.35), transparent); }
 .transparent-slider { padding:0 1.5rem; }

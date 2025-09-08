@@ -171,15 +171,14 @@ const Search = ({ theme, onToggleTheme }) => {
     const updateEdgeScales = () => {
       const track = sliderTrackRef.current; if(!track) return;
       const cards = Array.from(track.querySelectorAll('.slider-card'));
-      const rectTrack = track.getBoundingClientRect();
-      const fullyVisibleIdxs = cards.map((c,i)=>{ const r=c.getBoundingClientRect(); return (r.left>=rectTrack.left+4 && r.right<=rectTrack.right-4)?i:null; }).filter(i=>i!==null);
+      if(!cards.length) return;
+      // Clear existing markers
       cards.forEach(c=>c.removeAttribute('data-edge'));
-      if(fullyVisibleIdxs.length){
-        const first = fullyVisibleIdxs[0];
-        const last = fullyVisibleIdxs[fullyVisibleIdxs.length-1];
-        if(first>0) cards[first-1]?.setAttribute('data-edge','left');
-        if(last < cards.length-1) cards[last+1]?.setAttribute('data-edge','right');
-      }
+      // Mark absolute first & last only
+      const first = cards[0];
+      const last = cards[cards.length-1];
+      first?.setAttribute('data-edge','left');
+      if(last && last!==first) last.setAttribute('data-edge','right');
     };
 
     useEffect(()=>{ updateEdgeScales(); }, [filtered]);
