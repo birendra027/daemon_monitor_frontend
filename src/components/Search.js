@@ -107,6 +107,14 @@ const Search = ({ theme, onToggleTheme }) => {
         // Per-daemon temporary instance edits keyed by daemon_id
         const [instanceEdits, setInstanceEdits] = useState({});
     const [hasChanges, setHasChanges] = useState(false);
+  const [notifications, setNotifications] = useState([]); // {id,message,type,daemonId}
+
+  const addNotification = (message, type='warning', daemonId=null) => {
+    // Prevent duplicate for same daemon while active
+    if (daemonId && notifications.some(n => n.daemonId === String(daemonId))) return;
+    const id = Math.random().toString(36).slice(2);
+    setNotifications(ns => [...ns, { id, message, type, daemonId: daemonId ? String(daemonId) : null }]);
+  };
 
     useEffect(() => {
         let active = true;
@@ -149,6 +157,12 @@ const Search = ({ theme, onToggleTheme }) => {
             setData(prev => prev.map(d => d.daemon_id === daemon.daemon_id ? { ...d, instance: num, daemon_status: num < 1 ? 'DOWN' : 'UP' } : d));
             setInstanceEdits(prev => ({ ...prev, [daemon.daemon_id]: '' }));
             setHasChanges(true);
+      if (num === 0) {
+        addNotification(`${daemon.daemon_name} instances set to 0 — status marked DOWN`, 'warning', daemon.daemon_id);
+      } else if (num <= 1) {
+        // Optional: treat 1 as low threshold per requirement (>1 clears). Show a notice.
+        addNotification(`${daemon.daemon_name} has only ${num} instance running`, 'warning', daemon.daemon_id);
+      }
         };
 
     const save = async () => { setHasChanges(false); };
@@ -201,6 +215,30 @@ const Search = ({ theme, onToggleTheme }) => {
       return ()=> ro.disconnect();
     }, []);
     // === Slider logic injection END ===
+
+  // Recurrent reminder every 2 minutes for any daemon with instance <= 1 (until value > 1)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Build set of active notification daemonIds to avoid duplicates
+      setNotifications(prev => {
+        const activeIds = new Set(prev.filter(n => n.daemonId).map(n => n.daemonId));
+        const additions = [];
+                data.forEach(d => {
+          const inst = Number(d.instance)||0;
+          if (inst <= 1) { // threshold; change to <1 if you only want zero
+            const idStr = String(d.daemon_id);
+            if (!activeIds.has(idStr)) {
+              const id = Math.random().toString(36).slice(2);
+                            additions.push({ id, message: `${d.daemon_name} has critical instance count (${inst}). Increase above 1 to stop alerts`, type:'warning', daemonId: idStr });
+            }
+          }
+        });
+        if (!additions.length) return prev;
+        return [...prev, ...additions];
+      });
+    }, 120000); // 2 minutes
+    return () => clearInterval(interval);
+  }, [data]);
 
     return (
         <div className="app-shell">
@@ -318,6 +356,15 @@ const Search = ({ theme, onToggleTheme }) => {
                 {/* SLIDER END */}
                 <ChartPanel data={filtered} theme={theme} />
             </main>
+            {/* Notification stack */}
+            <div className="notify-stack" aria-live="polite" aria-atomic="true">
+              {notifications.map(n => (
+                <div key={n.id} className={`notify-item ${n.type}`} role="alert">
+                  <div className="notify-content">{n.message}</div>
+                  <button className="notify-close" aria-label="Dismiss notification" onClick={() => setNotifications(ns => ns.filter(x => x.id !== n.id))}>×</button>
+                </div>
+              ))}
+            </div>
         </div>
     );
 };

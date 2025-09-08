@@ -464,3 +464,17 @@ body { font-size: clamp(14px, 13px + .35vw, 16px); }
 .transparent-slider .slider-btn-right { right:-6px; }
 @media (max-width:700px){ .drag-handle { display:none; } }
 
+/* Notification stack (right panel) */
+.notify-stack { position:fixed; bottom:1.25rem; right:1.25rem; width:320px; max-width:calc(100% - 2rem); display:flex; flex-direction:column; gap:.75rem; z-index:120; pointer-events:none; }
+.notify-item { position:relative; padding:.75rem .95rem .8rem 1rem; border-radius:.85rem; font-size:.7rem; line-height:1.25; box-shadow:0 8px 28px -10px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,0.05); backdrop-filter:blur(12px) saturate(160%); -webkit-backdrop-filter:blur(12px) saturate(160%); border:1px solid rgba(255,255,255,0.12); animation:notifyIn .45s cubic-bezier(.22,.61,.36,1); pointer-events:auto; overflow:hidden; }
+.theme-light .notify-item { border:1px solid rgba(0,0,0,0.08); box-shadow:0 6px 20px -8px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,0.04); }
+.notify-item.warning { background:linear-gradient(135deg, rgba(253,230,138,0.85) 0%, rgba(250,204,21,0.75) 55%, rgba(234,179,8,0.62) 100%); color:#3f2e00; }
+.theme-dark .notify-item.warning { background:linear-gradient(135deg, rgba(250,204,21,0.18) 0%, rgba(234,179,8,0.14) 55%, rgba(202,138,4,0.12) 100%); color:#fde68a; border:1px solid rgba(250,204,21,0.25); box-shadow:0 6px 22px -10px rgba(0,0,0,0.55), 0 0 0 1px rgba(250,204,21,0.15) inset; }
+.notify-content { margin-right:1.5rem; font-weight:500; letter-spacing:.25px; }
+.notify-close { position:absolute; top:4px; right:6px; border:none; background:transparent; font-size:.9rem; line-height:1; cursor:pointer; color:inherit; opacity:.6; transition:opacity .25s ease, transform .35s cubic-bezier(.22,.61,.36,1); }
+.notify-close:hover { opacity:1; transform:scale(1.05); }
+@keyframes notifyIn { from { opacity:0; transform:translateX(18px) scale(.92); } 60% { opacity:1; transform:translateX(-4px) scale(1.02);} to { opacity:1; transform:translateX(0) scale(1);} }
+/* Auto-dismiss bar */
+/* Progress bar removed (persistent notifications) */
+/*.notify-item::after { ... }*/
+
