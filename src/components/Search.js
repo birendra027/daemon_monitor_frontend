@@ -25,7 +25,7 @@ const Search = ({ theme, onToggleTheme }) => {
     const [error, setError] = useState(null);
         // Per-daemon temporary instance edits keyed by daemon_id
         const [instanceEdits, setInstanceEdits] = useState({});
-    const [hasChanges, setHasChanges] = useState(false);
+  // Removed batch save functionality; changes now apply immediately
   const [notifications, setNotifications] = useState([]); // {id,message,type,daemonId}
 
   const addNotification = (message, type='warning', daemonId=null) => {
@@ -65,8 +65,7 @@ const Search = ({ theme, onToggleTheme }) => {
     }, [query, data]);
 
     const toggleStatus = (id) => {
-        setData(prev => prev.map(d => String(d.daemon_id) === String(id) ? { ...d, daemon_status: d.daemon_status === 'UP' ? 'DOWN' : 'UP' } : d));
-        setHasChanges(true);
+  setData(prev => prev.map(d => String(d.daemon_id) === String(id) ? { ...d, daemon_status: d.daemon_status === 'UP' ? 'DOWN' : 'UP' } : d));
     };
 
         const applyInstance = (daemon) => {
@@ -75,16 +74,12 @@ const Search = ({ theme, onToggleTheme }) => {
             if (raw === undefined || raw === '' || Number.isNaN(num) || num < 0) return;
             setData(prev => prev.map(d => d.daemon_id === daemon.daemon_id ? { ...d, instance: num, daemon_status: num < 1 ? 'DOWN' : 'UP' } : d));
             setInstanceEdits(prev => ({ ...prev, [daemon.daemon_id]: '' }));
-            setHasChanges(true);
       if (num === 0) {
         addNotification(`${daemon.daemon_name} instances set to 0 — status marked DOWN`, 'warning', daemon.daemon_id);
-      } else if (num <= 1) {
-        // Optional: treat 1 as low threshold per requirement (>1 clears). Show a notice.
-        addNotification(`${daemon.daemon_name} has only ${num} instance running`, 'warning', daemon.daemon_id);
       }
         };
 
-    const save = async () => { setHasChanges(false); };
+  // save() removed (no batching) – edits persist instantly in local state
 
     // === Slider logic injection START ===
     // (Placed just before the return; dedupe guard: only add if not existing)
@@ -135,7 +130,7 @@ const Search = ({ theme, onToggleTheme }) => {
     }, []);
     // === Slider logic injection END ===
 
-  // Recurrent reminder every 2 minutes for any daemon with instance <= 1 (until value > 1)
+  // Recurrent reminder every 2 minutes for any daemon with instance == 0 (until value > 0)
   useEffect(() => {
     const interval = setInterval(() => {
       // Build set of active notification daemonIds to avoid duplicates
@@ -144,11 +139,11 @@ const Search = ({ theme, onToggleTheme }) => {
         const additions = [];
                 data.forEach(d => {
           const inst = Number(d.instance)||0;
-          if (inst <= 1) { // threshold; change to <1 if you only want zero
+      if (inst === 0) {
             const idStr = String(d.daemon_id);
             if (!activeIds.has(idStr)) {
               const id = Math.random().toString(36).slice(2);
-                            additions.push({ id, message: `${d.daemon_name} has critical instance count (${inst}). Increase above 1 to stop alerts`, type:'warning', daemonId: idStr });
+        additions.push({ id, message: `${d.daemon_name} has 0 running instances (DOWN). Increase above 0 to stop alerts`, type:'warning', daemonId: idStr });
             }
           }
         });
@@ -201,9 +196,7 @@ const Search = ({ theme, onToggleTheme }) => {
                             </ul>
                         )}
                   </div>
-                  {hasChanges && (
-                        <button onClick={save} className="accent-action expanded-only" style={{whiteSpace:'nowrap'}}>Save Changes</button>
-                  )}
+                  {/* Save Changes button removed */}
                 </div>
                 <button type="button" onClick={onToggleTheme} className="btn-theme-toggle" aria-label="Toggle color theme">
                   <span className="theme-icon" role="img" aria-hidden="true">{theme === 'theme-dark' ? '🌙' : '☀️'}</span>
