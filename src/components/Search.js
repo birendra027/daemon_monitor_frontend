@@ -22,6 +22,73 @@ const highlightMatch = (text = '', query) => {
     return (<>{before}<span className="bg-yellow-400/70 text-gray-900 font-semibold px-0.5 rounded">{match}</span>{after}</>);
 };
 
+// Lightweight line chart for daemon instances
+const ChartPanel = ({ data }) => {
+  const points = useMemo(() => (data || []).map((d, i) => ({ x: i, y: Number(d.instance) || 0 })), [data]);
+  if (points.length < 2) return null;
+  const width = 900, height = 300, padX = 40, padY = 28;
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const spanX = maxX - minX || 1, spanY = maxY - minY || 1;
+  const sx = x => padX + (x - minX) / spanX * (width - padX * 2);
+  const sy = y => height - padY - (y - minY) / spanY * (height - padY * 2);
+  const path = (() => {
+    if (points.length < 2) return '';
+    const c = points.map(p => ({ X: sx(p.x), Y: sy(p.y) }));
+    let d = `M ${c[0].X} ${c[0].Y}`;
+    for (let i = 0; i < c.length - 1; i++) {
+      const p0 = c[i - 1] || c[i], p1 = c[i], p2 = c[i + 1], p3 = c[i + 2] || p2;
+      const cp1x = p1.X + (p2.X - p0.X) / 6, cp1y = p1.Y + (p2.Y - p0.Y) / 6;
+      const cp2x = p2.X - (p3.X - p1.X) / 6, cp2y = p2.Y - (p3.Y - p1.Y) / 6;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.X} ${p2.Y}`;
+    }
+    return d;
+  })();
+  const grid = Array.from({ length: 5 }, (_, i) => {
+    const yVal = minY + (spanY / 4) * i; return { y: sy(yVal), label: Math.round(yVal) };
+  });
+  return (
+    <div className="chart-card theme-surface" style={{ marginTop: '2rem', padding: '1.1rem 1.25rem' }}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'.6rem'}}>
+        <h3 style={{margin:0, fontSize:'0.9rem'}}>Instance Distribution</h3>
+        <span style={{fontSize:'0.6rem', opacity:.7}}>Count: {points.length}</span>
+      </div>
+      <div className="chart-wrapper">
+        <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daemon instance counts">
+          <defs>
+            <linearGradient id="instStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#c084fc" />
+              <stop offset="60%" stopColor="#8b5cf6" />
+              <stop offset="100%" stopColor="#6366f1" />
+            </linearGradient>
+            <linearGradient id="instFill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(192,132,252,0.32)" />
+              <stop offset="55%" stopColor="rgba(139,92,246,0.18)" />
+              <stop offset="100%" stopColor="rgba(99,102,241,0.04)" />
+            </linearGradient>
+            <filter id="instGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="g" />
+              <feMerge>
+                <feMergeNode in="g" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          {grid.map(g => (
+            <g key={g.y}>
+              <line x1={padX} x2={width - padX} y1={g.y} y2={g.y} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+              <text x={8} y={g.y + 4} fontSize={10} fill="rgba(255,255,255,0.28)" style={{fontFamily:'ui-monospace,monospace'}}>{g.label}</text>
+            </g>
+          ))}
+          <path d={`${path} L ${sx(points[points.length-1].x)} ${sy(minY)} L ${sx(points[0].x)} ${sy(minY)} Z`} fill="url(#instFill)" opacity={0.85} />
+          <path d={path} fill="none" stroke="url(#instStroke)" strokeWidth={4} filter="url(#instGlow)" strokeLinecap="round" />
+          {points.map(p => <circle key={p.x} cx={sx(p.x)} cy={sy(p.y)} r={5} fill="#c084fc" stroke="#fff" strokeWidth={1.1} opacity={0.9} />)}
+        </svg>
+      </div>
+    </div>
+  );
+};
+
 const Search = ({ theme, onToggleTheme }) => {
     const [query, setQuery] = useState('');
     const [data, setData] = useState([]);
@@ -158,6 +225,7 @@ const Search = ({ theme, onToggleTheme }) => {
                         );
                     })}
                 </div>
+                <ChartPanel data={filtered} />
             </main>
         </div>
     );
