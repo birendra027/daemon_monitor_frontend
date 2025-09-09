@@ -225,34 +225,17 @@ const Search = ({ theme, onToggleTheme }) => {
                     role="group"
                     style={{scrollSnapType:'x mandatory'}}
                   >
-                    {filtered.map((d, idx) => {
-                      const up = d.daemon_status === 'UP';
-                      return (
-                        <div
-                          key={d.daemon_id}
-                          className="card-generic slider-card" 
-                          style={{borderColor: up ? 'var(--success)' : 'var(--danger)', scrollSnapAlign:'start'}}
-                        >
-                          <h2 style={{fontSize:'clamp(.85rem, .8rem + .35vw, 1.05rem)', margin:'0 0 4px', wordBreak:'break-word'}}>{highlightMatch(d.daemon_name, query)}</h2>
-                          <p style={{margin:'0 0 4px', fontSize:'0.6rem', opacity:0.75}}>ID: {d.daemon_id}</p>
-                          <p style={{margin:'0 0 6px', fontSize:'0.65rem'}}>Status: <span className={up ? 'badge-up' : 'badge-down'}>{d.daemon_status}</span></p>
-                          <p style={{margin:'0 0 10px', fontSize:'0.65rem'}}>Instances: {d.instance}</p>
-                          <div style={{display:'flex', gap:'6px', alignItems:'center', marginBottom:'10px'}}>
-                            <input
-                              type="number"
-                              min={0}
-                              value={instanceEdits[d.daemon_id] ?? ''}
-                              onChange={e => setInstanceEdits(prev => ({ ...prev, [d.daemon_id]: e.target.value }))}
-                              placeholder="Set"
-                              className="input-basic"
-                              style={{width:'64px', padding:'4px 6px', fontSize:'0.6rem'}}
-                            />
-                            <button onClick={() => applyInstance(d)} className="accent-action" style={{fontSize:'0.55rem', padding:'4px 8px'}}>Apply</button>
-                          </div>
-                          <button onClick={() => toggleStatus(d.daemon_id)} className="btn-small" style={{fontSize:'0.55rem'}}>Toggle {up ? 'Down' : 'Up'}</button>
-                        </div>
-                      );
-                    })}
+                    {filtered.map(d => (
+                      <DaemonCard
+                        key={d.daemon_id}
+                        daemon={d}
+                        query={query}
+                        instanceEdits={instanceEdits}
+                        setInstanceEdits={setInstanceEdits}
+                        applyInstance={applyInstance}
+                        toggleStatus={toggleStatus}
+                      />
+                    ))}
                   </div>
                   {filtered.length > 4 && (
                     <button
