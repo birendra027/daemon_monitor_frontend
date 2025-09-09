@@ -96,20 +96,34 @@ const ChartPanel = ({ data, theme }) => {
             );
           })}
         </svg>
-        {hover && (
-          <div
-            className="chart-tooltip"
-            role="tooltip"
-            style={{
-              left: `${(hover.x / width) * 100}%`,
-              top: `${(hover.y / height) * 100}%`,
-              transform:'translate(12px, -12px)'
-            }}
-          >
-            <div className="chart-tooltip-label">{hover.label}</div>
-            <div className="chart-tooltip-value">Instances: {hover.value}</div>
-          </div>
-        )}
+        {hover && (() => {
+          // Dynamic edge-aware positioning to avoid clipping
+          const tooltipWidth = 150; // px (approx; layout is stable)
+          const tooltipHeight = 60; // px
+          let leftPx = hover.x + 12; // default place to right
+          if (leftPx + tooltipWidth > width - 4) {
+            leftPx = hover.x - tooltipWidth - 12; // flip to left side
+          }
+          if (leftPx < 4) leftPx = 4; // clamp
+          let topPx = hover.y - tooltipHeight - 12; // default above point
+          if (topPx < 4) { // not enough room above – place below
+            topPx = hover.y + 12;
+          }
+          return (
+            <div
+              className="chart-tooltip"
+              role="tooltip"
+              style={{
+                left: leftPx,
+                top: topPx,
+                position:'absolute'
+              }}
+            >
+              <div className="chart-tooltip-label">{hover.label}</div>
+              <div className="chart-tooltip-value">Instances: {hover.value}</div>
+            </div>
+          );
+        })()}
       </div>
     </section>
   );
